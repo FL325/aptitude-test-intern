@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>適性検査</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #EEF2F5;
+    --paper: #FFFFFF;
+    --ink: #1B2733;
+    --muted: #5A6772;
+    --line: #CFD8E0;
+    --accent: #1F5C7A;
+    --accent-soft: #E3EEF4;
+    --warn: #A86A12;
+    --danger: #B42318;
+    --font: "BIZ UDPGothic", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); }
+  body { font-size: 16px; line-height: 1.75; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  textarea, input[type=text] { -webkit-user-select: text; user-select: text; }
+  img { -webkit-user-drag: none; user-drag: none; max-width: 100%; }
+  button { font-family: inherit; }
+  :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  [hidden] { display: none !important; }
+  @media print { body { display: none !important; } }
+
+  .wrap { max-width: 760px; margin: 0 auto; padding: 0 20px; }
+
+  /* 開始前 */
+  .intro { padding: 56px 0 72px; }
+  .intro h1 { font-size: 30px; line-height: 1.3; margin: 0 0 8px; letter-spacing: .02em; }
+  .lead { color: var(--muted); margin: 0 0 32px; }
+  .facts { display: flex; gap: 0; border-top: 2px solid var(--ink); border-bottom: 1px solid var(--line); margin-bottom: 32px; }
+  .facts div { flex: 1; padding: 14px 0; }
+  .facts div + div { border-left: 1px solid var(--line); padding-left: 16px; }
+  .facts b { display: block; font-size: 26px; line-height: 1.2; font-variant-numeric: tabular-nums; }
+  .facts span { color: var(--muted); font-size: 14px; }
+  h2 { font-size: 18px; margin: 0 0 10px; }
+  .rules { margin: 0 0 28px; padding-left: 1.2em; }
+  .rules li { margin-bottom: 6px; }
+  .field { margin-bottom: 20px; }
+  .field label, .field .label { display: block; font-weight: 700; margin-bottom: 6px; }
+  .who-big { font-size: 22px; font-weight: 700; margin: 0; }
+  .req { color: var(--danger); font-weight: 400; font-size: 14px; margin-left: 6px; }
+  input[type=text] { width: 100%; max-width: 360px; font: inherit; padding: 10px 12px; border: 1px solid var(--line); border-radius: 4px; background: var(--paper); }
+  .consent { display: flex; gap: 12px; align-items: flex-start; background: var(--paper); border: 1px solid var(--line); border-radius: 4px; padding: 14px 16px; margin-bottom: 28px; cursor: pointer; }
+  .consent input { width: 20px; height: 20px; margin-top: 4px; flex: none; accent-color: var(--accent); }
+  .btn { font-size: 17px; font-weight: 700; padding: 13px 28px; border-radius: 4px; border: 0; background: var(--accent); color: #fff; cursor: pointer; }
+  .btn:disabled { background: #9AABB7; cursor: not-allowed; }
+  .btn.ghost { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+  .msg { color: var(--danger); margin-top: 12px; min-height: 1.5em; }
+
+  /* 受験中ヘッダー（タイマー） */
+  .bar { position: sticky; top: 0; z-index: 20; background: var(--paper); border-bottom: 1px solid var(--line); }
+  .bar .wrap { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+  .bar .name { color: var(--muted); font-size: 14px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; margin-right: 16px; max-width: 30%; }
+  .timer { display: flex; align-items: baseline; gap: 10px; color: var(--ink); }
+  .timer small { font-size: 13px; color: var(--muted); }
+  .timer b { font-size: 34px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: .02em; line-height: 1; }
+  .track { height: 5px; background: var(--accent-soft); }
+  .fill { height: 100%; background: var(--accent); width: 100%; transition: width .25s linear; }
+  .bar.warn .timer b { color: var(--warn); } .bar.warn .fill { background: var(--warn); }
+  .bar.danger .timer b { color: var(--danger); } .bar.danger .fill { background: var(--danger); }
+  .bar.danger { animation: pulse 1s steps(2, start) infinite; }
+  @keyframes pulse { 50% { background: #FDF1F0; } }
+  @media (prefers-reduced-motion: reduce) { .bar.danger { animation: none; } .fill { transition: none; } }
+
+  /* 問題 */
+  .exam { padding: 28px 0 96px; }
+  .intro-block { background: var(--paper); border-left: 4px solid var(--ink); padding: 18px 20px; margin: 36px 0 12px; }
+  .item { background: var(--paper); border: 1px solid var(--line); border-radius: 4px; padding: 20px; margin-bottom: 16px; }
+  .item.follow { margin-top: -4px; }
+  .qtext canvas { display: block; width: 100%; }
+  .qtext img { display: block; margin: 12px 0 4px; }
+  .hint { font-size: 14px; color: var(--muted); margin: 10px 0 0; }
+  .opts { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; margin-top: 14px; }
+  .opt { display: flex; align-items: center; gap: 10px; border: 1px solid var(--line); border-radius: 4px; padding: 10px 12px; cursor: pointer; background: #fff; }
+  .opts.long { grid-template-columns: 1fr; }
+  .opt input { width: 18px; height: 18px; margin: 0; accent-color: var(--accent); flex: none; }
+  .opt:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); font-weight: 700; }
+  .order { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+  .order label { display: flex; align-items: center; gap: 6px; font-weight: 700; }
+  .order select { font: inherit; padding: 8px 10px; border: 1px solid var(--line); border-radius: 4px; background: #fff; min-width: 76px; }
+  .locked .order select { opacity: .6; pointer-events: none; }
+  textarea { width: 100%; min-height: 150px; margin-top: 14px; font: inherit; line-height: 1.7; padding: 12px; border: 1px solid var(--line); border-radius: 4px; resize: vertical; }
+  .count { text-align: right; font-size: 13px; color: var(--muted); }
+  .locked .opt, .locked textarea { opacity: .6; pointer-events: none; }
+  .submit-row { display: flex; justify-content: flex-end; margin-top: 28px; }
+
+  /* 完了・案内 */
+  .center { padding: 96px 0; }
+  .center h1 { font-size: 26px; margin: 0 0 12px; }
+  .center p { color: var(--muted); margin: 0 0 24px; }
+
+  /* 重なり表示 */
+  .overlay { position: fixed; inset: 0; z-index: 50; background: rgba(27,39,51,.72); display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .dialog { background: var(--paper); border-radius: 6px; max-width: 440px; width: 100%; padding: 26px; }
+  .dialog h2 { font-size: 19px; margin-bottom: 8px; }
+  .dialog p { margin: 0 0 20px; color: var(--muted); }
+  .dialog .row { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
+  .dialog.alert { border-top: 5px solid var(--danger); }
+  /* カメラ */
+  .camcheck { background: var(--paper); border: 1px solid var(--line); border-radius: 4px; padding: 16px; margin-bottom: 20px; }
+  .camcheck .row { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+  .camcheck video { width: 200px; height: 150px; object-fit: cover; background: #000; border-radius: 4px; transform: scaleX(-1); }
+  .camstatus { font-size: 15px; }
+  .camstatus.ok { color: #1E7A46; font-weight: 700; }
+  .camstatus.ng { color: var(--danger); font-weight: 700; }
+  .camchip { display: flex; align-items: center; gap: 8px; margin-right: auto; }
+  .camchip video { width: 56px; height: 42px; object-fit: cover; border-radius: 3px; background: #000; transform: scaleX(-1); }
+  .camchip span { font-size: 12px; color: var(--muted); line-height: 1.3; }
+  .btn.sub { font-size: 15px; padding: 9px 18px; background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+  /* 応募者プロフィール */
+  .pf-pc { color: var(--danger); font-size: 20px; font-weight: 700; margin: 4px 0 8px; }
+  .pf-note-label { display: block; font-weight: 700; font-size: 15px; margin: 16px 0 6px; }
+  .pf-q textarea.pf-note { min-height: 90px; }
+  .camnote { font-size: 14px; color: var(--muted); margin: 4px 0 0; }
+  .pf-who { margin: -12px 0 28px; color: var(--muted); }
+  .pf-who b { color: var(--ink); }
+  .pf-q { background: var(--paper); border: 1px solid var(--line); border-radius: 4px; padding: 18px 20px; margin-bottom: 14px; }
+  .pf-q.err { border-color: var(--danger); box-shadow: 0 0 0 1px var(--danger) inset; }
+  .pf-label { display: block; font-weight: 700; margin: 0 0 10px; }
+  .pf-sub { font-weight: 400; font-size: 14px; color: var(--muted); margin-left: 6px; }
+  .pf-opts { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pf-opts .opt { min-width: 120px; }
+  .pf-q textarea { margin-top: 0; min-height: 120px; }
+  .pf-q input[type=text] { max-width: 420px; }
+  .pf-q .hint { margin-top: 10px; }
+  textarea::placeholder, input::placeholder { color: #9AA5AE; }
+  .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 10px 18px; border-radius: 4px; z-index: 60; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<!-- 開始前 -->
+<main id="screen-intro" class="wrap intro" hidden>
+  <h1>適性検査</h1>
+  <p class="lead">「回答を開始する」を押すと問題が表示され、時間の計測が始まります。途中で中断したり、やり直したりすることはできません。</p>
+  <div class="facts">
+    <div><b>15分</b><span>制限時間</span></div>
+    <div><b>全8問</b><span>すべて選択式</span></div>
+  </div>
+  <h2>受験上の注意</h2>
+  <ul class="rules">
+    <li>AI（ChatGPTなど）、計算機・電卓、インターネット検索、他の人の助けは使わないでください。</li>
+    <li>受験中は全画面表示になります。全画面の解除、別のタブやアプリへの切り替えは記録されます。</li>
+    <li>画面の切り替え回数と時間、全画面の解除回数、再読み込みの回数は記録し、採点時に確認します。</li>
+    <li>コピー、貼り付け、右クリックは使用できません。</li>
+    <li>時間が0になると、その時点までの解答が自動で送信されます。</li>
+    <li>ページを再読み込みしても、残り時間は元に戻りません。</li>
+    <li><b>本人確認のため、Webカメラで受験者の顔を撮影します</b>（開始時に1枚、受験中にランダムなタイミングで3枚）。カメラを使用できない場合は受験できません。</li>
+    <li>撮影した画像は本人確認のみに使用し、社内の限られた担当者だけが確認します。受験日から30日後に自動で削除します。</li>
+  </ul>
+  <h2>カメラの確認</h2>
+  <div class="camcheck">
+    <div class="row">
+      <video id="camPreview" autoplay playsinline muted hidden></video>
+      <div>
+        <p class="camstatus" id="camStatus">「カメラを確認する」を押し、ブラウザの確認画面で「許可」を選んでください。</p>
+        <p class="camnote" id="camNote" hidden>※ご本人様確認のための画像撮影で使用します</p>
+        <button class="btn sub" id="camBtn" type="button">カメラを確認する</button>
+      </div>
+    </div>
+  </div>
+  <div class="field">
+    <span class="label">受験者</span>
+    <p class="who-big"><span id="inviteName"></span> さん</p>
+    <p class="hint">ご本人でない場合は受験せず、採用担当者にご連絡ください。<span id="expiryText"></span></p>
+  </div>
+  <label class="consent">
+    <input type="checkbox" id="agree">
+    <span>私は上記の受験者本人です。注意事項を確認し、AI・計算機・他の人の助けを使わずに受験し、画面の切り替えなどの記録と、本人確認のためのカメラ撮影に同意します。</span>
+  </label>
+  <button class="btn" id="startBtn" disabled>回答を開始する</button>
+  <div class="msg" id="introMsg" role="alert"></div>
+</main>
+
+<!-- 応募者プロフィール -->
+<main id="screen-profile" class="wrap intro" hidden>
+  <h1>応募者アンケート</h1>
+  <p class="pf-pc">※PCよりご回答ください※</p>
+  <p class="lead">まずは簡単なプロフィールの入力をお願いします。プロフィールの入力が終わると15分間の適性検査に進むため、カメラが利用できるPCからのアクセスをお願いいたします。</p>
+  <p class="pf-who">受験者：<b id="pfName"></b> さん</p>
+  <div id="pfForm"></div>
+  <button class="btn" id="pfSubmit" type="button">回答を送信して次へ</button>
+  <div class="msg" id="pfMsg" role="alert"></div>
+</main>
+
+<!-- 再開 -->
+<main id="screen-resume" class="wrap center" hidden>
+  <h1>受験の途中です</h1>
+  <p>時間は止まっていません。残り時間は <b id="resumeLeft">--:--</b> です。<br>「受験を再開する」を押すと、カメラを起動し、全画面表示で続きから再開します。</p>
+  <button class="btn" id="resumeBtn">受験を再開する</button>
+  <div class="msg" id="resumeMsg" role="alert"></div>
+</main>
+
+<!-- 受験中 -->
+<div id="screen-exam" hidden>
+  <header class="bar" id="bar">
+    <div class="wrap">
+      <div class="camchip"><video id="camLive" autoplay playsinline muted></video><span>カメラ<br>撮影あり</span></div>
+      <span class="name" id="who"></span>
+      <div class="timer" aria-live="off"><small>残り時間</small><b id="clock">15:00</b></div>
+    </div>
+    <div class="track"><div class="fill" id="fill"></div></div>
+  </header>
+  <main class="wrap exam" id="exam"></main>
+</div>
+
+<!-- 完了 -->
+<main id="screen-done" class="wrap center" hidden>
+  <h1 id="doneTitle">解答を提出しました</h1>
+  <p id="doneText">お疲れさまでした。このページは閉じてかまいません。</p>
+</main>
+
+<!-- 送信失敗 -->
+<main id="screen-error" class="wrap center" hidden>
+  <h1>解答を送信できませんでした</h1>
+  <p>通信状況を確認して「もう一度送信する」を押してください。解答は画面に残っています。</p>
+  <button class="btn" id="retryBtn">もう一度送信する</button>
+</main>
+
+<!-- 受験URLが使えない -->
+<main id="screen-blocked" class="wrap center" hidden>
+  <h1 id="blockedTitle">この受験URLは使用できません</h1>
+  <p id="blockedText">採用担当者からご案内した受験URLを開いてください。</p>
+</main>
+
+<!-- 読み込み中 -->
+<main id="screen-loading" class="wrap center">
+  <p id="loadingText">読み込んでいます…</p>
+</main>
+
+<!-- 提出確認 -->
+<div class="overlay" id="confirmBox" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="cfTitle">
+    <h2 id="cfTitle">解答を提出しますか？</h2>
+    <p id="cfText">提出後は解答を変更できません。</p>
+    <div class="row">
+      <button class="btn ghost" id="cfCancel">問題に戻る</button>
+      <button class="btn" id="cfOk">提出する</button>
+    </div>
+  </div>
+</div>
+
+<!-- 全画面解除の警告 -->
+<div class="overlay" id="fsBox" hidden>
+  <div class="dialog alert" role="alertdialog" aria-modal="true" aria-labelledby="fsTitle">
+    <h2 id="fsTitle">全画面表示が解除されました</h2>
+    <p>この操作は記録されています。時間は止まっていません。「全画面に戻る」を押して受験を続けてください。</p>
+    <div class="row"><button class="btn" id="fsBack">全画面に戻る</button></div>
+  </div>
+</div>
+
+<!-- カメラ停止の警告 -->
+<div class="overlay" id="camBox" hidden>
+  <div class="dialog alert" role="alertdialog" aria-modal="true" aria-labelledby="camTitle">
+    <h2 id="camTitle">カメラが停止しました</h2>
+    <p>この受験はカメラの使用が必要です。この操作は記録されています。時間は止まっていません。「カメラを再開する」を押してください。</p>
+    <div class="row"><button class="btn" id="camBack">カメラを再開する</button></div>
+    <div class="msg" id="camBoxMsg"></div>
+  </div>
+</div>
+
+<!-- 送信中 -->
+<div class="overlay" id="sendingBox" hidden>
+  <div class="dialog"><h2>送信しています…</h2><p>画面を閉じずにお待ちください。</p></div>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ▼ Apps Scriptをデプロイしたときの「ウェブアプリのURL」に書き換えてください ▼ */
+  var API_URL = 'https://script.google.com/macros/s/AKfycbzh_yIrnGsdwCI8xV_9Zn-QE0Dxf5oKWDeHIagaGURoGIeH8rHW9jgVyjr0h7XNbUxa/exec';
+  /* ▲ ここまで ▲ */
+
+  var KEY = 'aptitude_exam_id';
+  var SHOTS_RANDOM = 3;      // 受験中のランダム撮影回数
+  var state = {
+    id: null, name: '', items: [], figs: {},
+    deadline: 0, limitSec: 900,
+    active: false, locked: false, submitting: false,
+    stats: { awayCount: 0, awaySeconds: 0, fsExitCount: 0, blockedCount: 0, camStopCount: 0, fsUnavailable: false, ua: navigator.userAgent },
+    stream: null, shotPlan: null, shotTimer: null, startedAt: 0,
+    awaySince: 0, tick: null, pendingReason: null
+  };
+
+  var $ = function (id) { return document.getElementById(id); };
+  var screens = ['intro', 'profile', 'resume', 'exam', 'done', 'error', 'loading', 'blocked'];
+  var TOKEN = (function () {
+    try { return (new URLSearchParams(location.search).get('t') || '').toLowerCase(); } catch (e) { return ''; }
+  })();
+  function blocked(title, text) {
+    $('blockedTitle').textContent = title;
+    $('blockedText').textContent = text;
+    show('blocked');
+  }
+  function show(name) { screens.forEach(function (s) { $('screen-' + s).hidden = (s !== name); }); window.scrollTo(0, 0); }
+
+  function store(k, v) { try { if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function load(k) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch (e) { return null; } }
+
+  /* Apps Scriptとの通信 */
+  function api(action, body) {
+    body = body || {};
+    body.action = action;
+    return fetch(API_URL, { method: 'POST', body: JSON.stringify(body) })
+      .then(function (res) { return res.json(); })
+      .then(function (j) {
+        if (!j.ok) throw new Error(j.error || '通信に失敗しました。');
+        return j.data;
+      });
+  }
+  var ACTIONS = { startExam: 'start', resumeExam: 'resume', reportActivity: 'report', submitExam: 'submit' };
+  function run(fn) {
+    var a = arguments;
+    var body = fn === 'startExam' ? { token: TOKEN }
+      : fn === 'resumeExam' ? { token: TOKEN }
+      : fn === 'reportActivity' ? { id: a[1], stats: a[2] }
+      : { id: a[1], answers: a[2], stats: a[3], reason: a[4] };
+    return api(ACTIONS[fn], body);
+  }
+
+  /* ---------- カメラ ---------- */
+  function startCamera() {
+    if (!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) {
+      return Promise.reject({ name: 'NoApi' });
+    }
+    if (state.stream && state.stream.getVideoTracks().some(function (t) { return t.readyState === 'live'; })) {
+      return Promise.resolve(state.stream);
+    }
+    return navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' }, audio: false })
+      .then(function (s) {
+        state.stream = s;
+        ['camPreview', 'camLive'].forEach(function (id) { $(id).srcObject = s; });
+        s.getVideoTracks().forEach(function (t) { t.addEventListener('ended', onCamStopped); });
+        return s;
+      });
+  }
+  function stopCamera() {
+    if (state.stream) state.stream.getTracks().forEach(function (t) { t.stop(); });
+    state.stream = null;
+  }
+  function camErrorText(e) {
+    var n = e && e.name;
+    if (n === 'NoApi') return 'このブラウザではカメラを使用できません。Chrome・Edge・Safariの最新版でお試しください。';
+    if (n === 'NotAllowedError' || n === 'SecurityError') return 'カメラの使用が許可されていません。アドレスバーのカメラのマークから「許可」に変更し、もう一度お試しください。';
+    if (n === 'NotFoundError' || n === 'OverconstrainedError') return 'カメラが見つかりません。カメラ付きの端末で受験してください。';
+    if (n === 'NotReadableError') return 'カメラを起動できません。ほかのアプリ（Zoomなど）がカメラを使っていないか確認してください。';
+    return 'カメラを起動できませんでした。';
+  }
+  function camLive() {
+    return !!(state.stream && state.stream.getVideoTracks().some(function (t) { return t.readyState === 'live' && t.enabled; }));
+  }
+  function onCamStopped() {
+    if (!state.active || state.submitting) return;
+    state.stats.camStopCount++;
+    reportSoon();
+    $('camBoxMsg').textContent = '';
+    $('camBox').hidden = false;
+  }
+  $('camBack').addEventListener('click', function () {
+    state.stream = null;
+    startCamera().then(function () {
+      $('camBox').hidden = true;
+      enterFullscreen();
+    }).catch(function (e) { $('camBoxMsg').textContent = camErrorText(e); });
+  });
+
+  /* 撮影して送る */
+  function capture(kind, attempt) {
+    attempt = attempt || 1;
+    var v = $('camLive');
+    if (!camLive() || !v.videoWidth || v.readyState < 2) {
+      if (attempt <= 5) { setTimeout(function () { capture(kind, attempt + 1); }, 1000); }
+      return;
+    }
+    var w = 320, h = Math.round(320 * v.videoHeight / v.videoWidth);
+    var c = document.createElement('canvas'); c.width = w; c.height = h;
+    c.getContext('2d').drawImage(v, 0, 0, w, h);
+    var img = c.toDataURL('image/jpeg', 0.7);
+    (function send(n) {
+      api('photo', { id: state.id, image: img, kind: kind }).catch(function () {
+        if (n < 3) setTimeout(function () { send(n + 1); }, 2000 * n);
+      });
+    })(1);
+  }
+
+  /* 撮影のタイミング（開始時刻を基準に、受験時間を3つに区切ってそれぞれの中でランダム） */
+  function planShots() {
+    var key = 'aptitude_shots_' + state.id;
+    var plan = load(key);
+    if (!plan) {
+      plan = { start: false, at: [] };
+      var from = 60, to = state.limitSec - 60, span = (to - from) / SHOTS_RANDOM;
+      for (var i = 0; i < SHOTS_RANDOM; i++) {
+        plan.at.push({ sec: Math.round(from + span * i + Math.random() * span), done: false });
+      }
+      store(key, plan);
+    }
+    state.shotPlan = plan;
+    if (!plan.start) { plan.start = true; store(key, plan); setTimeout(function () { capture('start'); }, 1500); } // 映像が安定してから撮影
+    clearInterval(state.shotTimer);
+    state.shotTimer = setInterval(function () {
+      if (!state.active || state.submitting) return;
+      var elapsed = (Date.now() - (state.deadline - state.limitSec * 1000)) / 1000;
+      plan.at.forEach(function (s) {
+        if (!s.done && elapsed >= s.sec) { s.done = true; store(key, plan); capture('random'); }
+      });
+    }, 1000);
+  }
+
+  var toastTimer;
+  function toast(t) {
+    var el = $('toast'); el.textContent = t; el.hidden = false;
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { el.hidden = true; }, 2200);
+  }
+
+  /* ---------- 開始前 ---------- */
+  var camReady = false;
+  function validate() { $('startBtn').disabled = !($('agree').checked && camReady); }
+  $('camBtn').addEventListener('click', function () {
+    $('camBtn').disabled = true;
+    $('camStatus').className = 'camstatus';
+    $('camStatus').textContent = 'カメラを起動しています…';
+    startCamera().then(function () {
+      camReady = true;
+      $('camPreview').hidden = false;
+      $('camStatus').className = 'camstatus ok';
+      $('camStatus').textContent = 'カメラを確認できました。顔が映っているか確認してください。';
+      $('camNote').hidden = false;
+      $('camBtn').hidden = true;
+      validate();
+    }).catch(function (e) {
+      camReady = false;
+      $('camNote').hidden = true;
+      $('camStatus').className = 'camstatus ng';
+      $('camStatus').textContent = camErrorText(e) + '（カメラを使用できない場合は受験できません）';
+      $('camBtn').disabled = false;
+      $('camBtn').textContent = 'もう一度確認する';
+      validate();
+    });
+  });
+  $('agree').addEventListener('change', validate);
+
+  $('startBtn').addEventListener('click', function () {
+    if (!camLive()) { camReady = false; validate(); $('introMsg').textContent = 'カメラが停止しています。「カメラを確認する」をもう一度押してください。'; $('camBtn').hidden = false; $('camBtn').disabled = false; return; }
+    enterFullscreen();
+    $('startBtn').disabled = true;
+    $('introMsg').textContent = '';
+    $('startBtn').textContent = '準備しています…';
+    run('startExam').then(function (p) {
+      state.name = p.name || state.name;
+      begin(p);
+    }).catch(function (e) {
+      exitFullscreen();
+      $('startBtn').textContent = '回答を開始する';
+      validate();
+      $('introMsg').textContent = (e && e.message) || '開始できませんでした。時間をおいてもう一度お試しください。';
+    });
+  });
+
+  /* ---------- 再開 ---------- */
+  $('resumeBtn').addEventListener('click', function () {
+    $('resumeBtn').disabled = true;
+    $('resumeMsg').textContent = '';
+    startCamera().then(function () {
+      enterFullscreen();
+      return run('resumeExam').then(function (p) {
+        if (p.status !== 'active') {
+          exitFullscreen(); stopCamera();
+          blocked('受験は終了しています', '制限時間を過ぎたか、すでに提出されています。このページは閉じてかまいません。');
+          return;
+        }
+        begin(p);
+      }, function (e) {
+        exitFullscreen();
+        $('resumeBtn').disabled = false;
+        $('resumeMsg').textContent = '再開できませんでした。通信状況を確認して、もう一度お試しください。';
+      });
+    }, function (e) {
+      $('resumeBtn').disabled = false;
+      $('resumeMsg').textContent = camErrorText(e) + '（カメラを使用できないと受験を続けられません）';
+    });
+  });
+
+  /* ---------- 受験開始 ---------- */
+  function begin(p) {
+    state.id = p.id;
+    state.items = p.items;
+    state.figs = p.figs || {};
+    state.limitSec = p.limitSec;
+    if (p.name) state.name = p.name;
+    var offset = p.serverNow - Date.now();
+    state.deadline = p.startedAt + p.limitSec * 1000 - offset;
+    var saved = load('aptitude_stats_' + p.id);
+    if (saved) { for (var k in saved) state.stats[k] = saved[k]; }
+    $('who').textContent = state.name ? state.name + ' さん' : '';
+    renderExam();
+    restoreDraft();
+    show('exam');
+    state.active = true;
+    if (p.reloads) reportSoon();
+    tick();
+    state.tick = setInterval(tick, 250);
+    planShots();
+  }
+
+  /* ---------- 問題の描画 ---------- */
+  function renderExam() {
+    var root = $('exam');
+    root.innerHTML = '';
+    state.items.forEach(function (it, idx) {
+      if (it.intro) {
+        var ib = document.createElement('section');
+        ib.className = 'intro-block qtext';
+        addBlocks(ib, it.intro);
+        root.appendChild(ib);
+      }
+      var sec = document.createElement('section');
+      sec.className = 'item';
+      sec.dataset.id = it.id;
+      var q = document.createElement('div');
+      q.className = 'qtext';
+      addBlocks(q, it.blocks);
+      sec.appendChild(q);
+
+      if (it.type === 'single' || it.type === 'multi') {
+        if (it.type === 'multi') {
+          var h = document.createElement('p'); h.className = 'hint'; h.textContent = '当てはまるものをすべて選んでください（複数選択）';
+          sec.appendChild(h);
+        }
+        var opts = document.createElement('div');
+        opts.className = it.options.some(function (o) { return o.length > 8; }) ? 'opts long' : 'opts'; // 長い選択肢は1行に1つ
+        it.options.forEach(function (o) {
+          var lab = document.createElement('label'); lab.className = 'opt';
+          var inp = document.createElement('input');
+          inp.type = it.type === 'single' ? 'radio' : 'checkbox';
+          inp.name = it.id; inp.value = o;
+          inp.addEventListener('change', saveDraft);
+          var sp = document.createElement('span'); sp.textContent = o;
+          lab.appendChild(inp); lab.appendChild(sp); opts.appendChild(lab);
+        });
+        sec.appendChild(opts);
+      } else if (it.type === 'order') {
+        var hint = document.createElement('p'); hint.className = 'hint'; hint.textContent = '[1]〜[5]のそれぞれに、当てはまる記号を選んでください';
+        sec.appendChild(hint);
+        var box = document.createElement('div'); box.className = 'order';
+        it.slots.forEach(function (slot, si) {
+          var lab = document.createElement('label');
+          lab.appendChild(document.createTextNode(slot));
+          var sel = document.createElement('select');
+          sel.name = it.id; sel.dataset.slot = si;
+          sel.setAttribute('aria-label', it.label + ' ' + slot);
+          var blank = document.createElement('option'); blank.value = ''; blank.textContent = '選択'; sel.appendChild(blank);
+          it.options.forEach(function (o) { var op = document.createElement('option'); op.value = o; op.textContent = o; sel.appendChild(op); });
+          sel.addEventListener('change', saveDraft);
+          lab.appendChild(sel); box.appendChild(lab);
+        });
+        sec.appendChild(box);
+      } else {
+        var ta = document.createElement('textarea');
+        ta.name = it.id; ta.maxLength = 4000;
+        ta.setAttribute('aria-label', it.label + 'の解答');
+        ta.setAttribute('autocomplete', 'off'); ta.setAttribute('spellcheck', 'false');
+        var cnt = document.createElement('div'); cnt.className = 'count'; cnt.textContent = '0文字';
+        ta.addEventListener('input', function () { cnt.textContent = ta.value.length + '文字'; saveDraftSoon(); });
+        sec.appendChild(ta); sec.appendChild(cnt);
+      }
+      root.appendChild(sec);
+    });
+    var row = document.createElement('div'); row.className = 'submit-row';
+    var btn = document.createElement('button'); btn.className = 'btn'; btn.id = 'submitBtn'; btn.textContent = '解答を提出する';
+    btn.addEventListener('click', openConfirm);
+    row.appendChild(btn); root.appendChild(row);
+    drawAllText();
+  }
+
+  function addBlocks(parent, blocks) {
+    blocks.forEach(function (b) {
+      if (b.text) {
+        var c = document.createElement('canvas');
+        c.dataset.text = b.text;  // 描画用。画面には文字として出しません
+        c.setAttribute('role', 'img');
+        c.setAttribute('aria-label', '問題文');
+        parent.appendChild(c);
+      } else if (b.fig) {
+        if (state.figs[b.fig]) {
+          var im = document.createElement('img');
+          im.src = state.figs[b.fig]; im.alt = '問題の図'; im.draggable = false;
+          parent.appendChild(im);
+        } else {
+          var p = document.createElement('p'); p.className = 'hint';
+          p.textContent = '図を読み込めませんでした。試験担当者にご連絡ください。';
+          parent.appendChild(p);
+        }
+      }
+    });
+  }
+
+  /* 問題文を画像（canvas）として描画する */
+  var FONT_PX = 17, LINE = 1.8;
+  var NO_START = '、。，．）」』】！？ー・：；…';
+  function wrapLines(ctx, text, maxW) {
+    var out = [];
+    text.split('\n').forEach(function (para) {
+      if (para === '') { out.push(''); return; }
+      var cur = '';
+      for (var i = 0; i < para.length; i++) {
+        var ch = para[i];
+        if (cur && ctx.measureText(cur + ch).width > maxW && NO_START.indexOf(ch) < 0) { out.push(cur); cur = ch; }
+        else cur += ch;
+      }
+      out.push(cur);
+    });
+    return out;
+  }
+  function drawText(c) {
+    var text = c.dataset.text;
+    var w = c.parentNode.clientWidth;
+    if (!w) return;
+    var dpr = Math.max(window.devicePixelRatio || 1, 2);
+    var ctx = c.getContext('2d');
+    var regular = FONT_PX + 'px ' + getComputedStyle(document.body).fontFamily;
+    var bold = '700 ' + regular;
+    ctx.font = regular;
+    var paras = text.split('\n');
+    var rows = [];
+    paras.forEach(function (p, i) {
+      var f = (i === 0 && p.charAt(0) === '【') ? bold : regular;
+      if (/^\*\*.*\*\*$/.test(p)) { p = p.slice(2, -2); f = bold; } // **〜** の行は太字
+      ctx.font = f;
+      wrapLines(ctx, p, w).forEach(function (l) { rows.push([l, f]); });
+    });
+    var lh = Math.round(FONT_PX * LINE);
+    var h = rows.length * lh;
+    c.width = Math.round(w * dpr); c.height = Math.round(h * dpr);
+    c.style.height = h + 'px';
+    ctx = c.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = '#1B2733';
+    ctx.textBaseline = 'middle';
+    rows.forEach(function (r, i) { ctx.font = r[1]; ctx.fillText(r[0], 0, i * lh + lh / 2); });
+  }
+  function drawAllText() {
+    var go = function () { Array.prototype.forEach.call(document.querySelectorAll('canvas[data-text]'), drawText); };
+    go();
+    if (document.fonts && document.fonts.load) {
+      Promise.all([document.fonts.load('400 17px "BIZ UDPGothic"'), document.fonts.load('700 17px "BIZ UDPGothic"')])
+        .then(go).catch(function () {});
+    }
+  }
+  var resizeTimer;
+  window.addEventListener('resize', function () { clearTimeout(resizeTimer); resizeTimer = setTimeout(drawAllText, 150); });
+
+  /* ---------- 解答の一時保存（再読み込み対策） ---------- */
+  function collect() {
+    var ans = {};
+    state.items.forEach(function (it) {
+      if (it.type === 'single') {
+        var s = document.querySelector('input[name="' + it.id + '"]:checked'); ans[it.id] = s ? s.value : '';
+      } else if (it.type === 'multi') {
+        ans[it.id] = Array.prototype.map.call(document.querySelectorAll('input[name="' + it.id + '"]:checked'), function (x) { return x.value; });
+      } else if (it.type === 'order') {
+        ans[it.id] = Array.prototype.map.call(document.querySelectorAll('select[name="' + it.id + '"]'), function (x) { return x.value; });
+      } else {
+        var t = document.querySelector('textarea[name="' + it.id + '"]'); ans[it.id] = t ? t.value : '';
+      }
+    });
+    return ans;
+  }
+  function saveDraft() { if (state.id) store('aptitude_draft_' + state.id, collect()); }
+  var draftTimer;
+  function saveDraftSoon() { clearTimeout(draftTimer); draftTimer = setTimeout(saveDraft, 400); }
+  function restoreDraft() {
+    var d = load('aptitude_draft_' + state.id); if (!d) return;
+    state.items.forEach(function (it) {
+      var v = d[it.id];
+      if (it.type === 'text') {
+        var t = document.querySelector('textarea[name="' + it.id + '"]');
+        if (t && v) { t.value = v; t.dispatchEvent(new Event('input')); }
+      } else if (it.type === 'order') {
+        if (Array.isArray(v)) Array.prototype.forEach.call(document.querySelectorAll('select[name="' + it.id + '"]'), function (x, i) { x.value = v[i] || ''; });
+      } else {
+        var vals = Array.isArray(v) ? v : [v];
+        Array.prototype.forEach.call(document.querySelectorAll('input[name="' + it.id + '"]'), function (x) { x.checked = vals.indexOf(x.value) >= 0; });
+      }
+    });
+  }
+
+  /* ---------- タイマー ---------- */
+  function fmt(sec) { var m = Math.floor(sec / 60), s = sec % 60; return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s; }
+  function tick() {
+    var left = Math.max(0, Math.ceil((state.deadline - Date.now()) / 1000));
+    $('clock').textContent = fmt(left);
+    $('fill').style.width = (left / state.limitSec * 100) + '%';
+    var bar = $('bar');
+    bar.classList.toggle('warn', left <= 300 && left > 60);
+    bar.classList.toggle('danger', left <= 60);
+    if (left <= 0 && !state.locked) {
+      clearInterval(state.tick);
+      lockAnswers();
+      $('confirmBox').hidden = true;
+      $('camBox').hidden = true;
+      submit('timeout');
+    }
+  }
+  function lockAnswers() {
+    state.locked = true;
+    $('exam').classList.add('locked');
+    Array.prototype.forEach.call(document.querySelectorAll('#exam input, #exam textarea, #exam select, #submitBtn'), function (el) { el.disabled = true; });
+  }
+
+  /* ---------- 提出 ---------- */
+  function openConfirm() {
+    var ans = collect(), empty = 0;
+    state.items.forEach(function (it) { var v = ans[it.id]; if (!v || (Array.isArray(v) && !v.filter(function (x) { return x; }).length) || (typeof v === 'string' && !v.trim())) empty++; });
+    $('cfText').textContent = empty ? '未回答の設問が' + empty + '問あります。提出後は解答を変更できません。' : '提出後は解答を変更できません。';
+    $('confirmBox').hidden = false;
+    $('cfCancel').focus();
+  }
+  $('cfCancel').addEventListener('click', function () { $('confirmBox').hidden = true; });
+  $('cfOk').addEventListener('click', function () {
+    $('confirmBox').hidden = true;
+    clearInterval(state.tick);
+    lockAnswers();
+    submit('manual');
+  });
+  $('retryBtn').addEventListener('click', function () { submit(state.pendingReason || 'manual'); });
+
+  function submit(reason, attempt) {
+    if (state.submitting) return;
+    state.submitting = true;
+    state.pendingReason = reason;
+    attempt = attempt || 1;
+    closeAway();
+    var answers = collect();
+    saveDraft();
+    $('sendingBox').hidden = false;
+    run('submitExam', state.id, answers, state.stats, reason).then(function (res) {
+      state.active = false;
+      state.submitting = false;
+      $('sendingBox').hidden = true;
+      store(KEY, null); store('aptitude_draft_' + state.id, null); store('aptitude_stats_' + state.id, null); store('aptitude_shots_' + state.id, null);
+      clearInterval(state.shotTimer);
+      stopCamera();
+      $('camBox').hidden = true;
+      exitFullscreen();
+      if (reason === 'timeout') {
+        $('doneTitle').textContent = '時間になりました';
+        $('doneText').textContent = '時間になったため、その時点までの解答を自動で送信しました。お疲れさまでした。このページは閉じてかまいません。';
+      }
+      show('done');
+    }).catch(function () {
+      state.submitting = false;
+      if (attempt < 3) { setTimeout(function () { submit(reason, attempt + 1); }, 1500 * attempt); return; }
+      $('sendingBox').hidden = true;
+      show('error');
+    });
+  }
+
+  /* ---------- 記録（画面の切り替え・全画面） ---------- */
+  function persistStats() { if (state.id) store('aptitude_stats_' + state.id, state.stats); }
+  var reportTimer;
+  function reportSoon() {
+    persistStats();
+    clearTimeout(reportTimer);
+    reportTimer = setTimeout(function () {
+      if (state.active && !state.submitting) run('reportActivity', state.id, state.stats).catch(function () {});
+    }, 1500);
+  }
+  function openAway() {
+    if (!state.active || state.awaySince) return;
+    state.awaySince = Date.now();
+    state.stats.awayCount++;
+    reportSoon();
+  }
+  function closeAway() {
+    if (!state.awaySince) return;
+    state.stats.awaySeconds += (Date.now() - state.awaySince) / 1000;
+    state.awaySince = 0;
+    reportSoon();
+  }
+  document.addEventListener('visibilitychange', function () { if (document.hidden) openAway(); else closeAway(); });
+  window.addEventListener('blur', openAway);
+  window.addEventListener('focus', closeAway);
+
+  function fsElement() { return document.fullscreenElement || document.webkitFullscreenElement; }
+  function enterFullscreen() {
+    var el = document.documentElement;
+    var req = el.requestFullscreen || el.webkitRequestFullscreen;
+    if (!req) { state.stats.fsUnavailable = true; return; }
+    try {
+      var p = req.call(el);
+      if (p && p.catch) p.catch(function () { state.stats.fsUnavailable = true; });
+    } catch (e) { state.stats.fsUnavailable = true; }
+  }
+  function exitFullscreen() {
+    try { if (fsElement()) (document.exitFullscreen || document.webkitExitFullscreen).call(document); } catch (e) {}
+  }
+  function onFsChange() {
+    if (fsElement()) { $('fsBox').hidden = true; return; }
+    if (state.active && !state.submitting && !state.stats.fsUnavailable) {
+      state.stats.fsExitCount++;
+      reportSoon();
+      $('fsBox').hidden = false;
+      $('fsBack').focus();
+    }
+  }
+  document.addEventListener('fullscreenchange', onFsChange);
+  document.addEventListener('webkitfullscreenchange', onFsChange);
+  $('fsBack').addEventListener('click', function () { enterFullscreen(); $('fsBox').hidden = true; });
+
+  /* ---------- コピー・貼り付け・右クリックの禁止 ---------- */
+  function block(e) {
+    if (!state.active && !$('screen-profile').hidden) return; // アンケート回答中は制限しない
+    e.preventDefault();
+    if (state.active) { state.stats.blockedCount++; reportSoon(); }
+    toast('この操作は使用できません');
+  }
+  ['copy', 'cut', 'paste', 'contextmenu', 'drop', 'dragstart'].forEach(function (ev) { document.addEventListener(ev, block, true); });
+  document.addEventListener('selectstart', function (e) {
+    var t = e.target && e.target.closest ? e.target.closest('textarea, input') : null;
+    if (!t) e.preventDefault();
+  }, true);
+  document.addEventListener('keydown', function (e) {
+    var k = (e.key || '').toLowerCase();
+    var mod = e.ctrlKey || e.metaKey;
+    if (k === 'f12' || (mod && ['c', 'v', 'x', 'p', 's', 'u'].indexOf(k) >= 0) || (mod && e.shiftKey && ['i', 'j', 'c'].indexOf(k) >= 0)) block(e);
+  }, true);
+
+  window.addEventListener('pagehide', function () { if (!state.active) stopCamera(); });
+  window.addEventListener('beforeunload', function (e) {
+    if (state.active && !state.locked) { persistStats(); saveDraft(); e.preventDefault(); e.returnValue = ''; }
+  });
+
+  /* ---------- 応募者プロフィール（質問はサーバーから受け取った定義で組み立てる） ---------- */
+  var PF_KEY = 'aptitude_profile_' + TOKEN;
+  var pfFields = [];
+  function pfBuild(fields) {
+    pfFields = fields || [];
+    var root = $('pfForm'); root.innerHTML = '';
+    var prev = null;
+    pfFields.forEach(function (f) {
+      if (f.inside && prev) {
+        // 直前の設問と同じ枠の中に、任意の補足欄として表示する
+        var nl = document.createElement('label'); nl.className = 'pf-note-label'; nl.htmlFor = 'pf-' + f.key;
+        nl.appendChild(document.createTextNode(f.label));
+        var os = document.createElement('span'); os.className = 'pf-sub'; os.textContent = f.optional ? '（任意）' : ''; nl.appendChild(os);
+        var ne = document.createElement(f.area ? 'textarea' : 'input');
+        if (!f.area) ne.type = 'text';
+        ne.id = 'pf-' + f.key; ne.className = 'pf-note'; if (f.max) ne.maxLength = f.max;
+        if (f.placeholder) ne.placeholder = f.placeholder;
+        ne.addEventListener('input', pfSave);
+        prev.appendChild(nl); prev.appendChild(ne);
+        return;
+      }
+      var q = document.createElement('div'); q.className = 'pf-q'; q.id = 'pfq-' + f.key; prev = q;
+      var lab = document.createElement(f.options ? 'p' : 'label'); lab.className = 'pf-label';
+      if (!f.options) lab.htmlFor = 'pf-' + f.key;
+      lab.appendChild(document.createTextNode(f.label));
+      if (f.sub) { var sb = document.createElement('span'); sb.className = 'pf-sub'; sb.textContent = f.sub; lab.appendChild(sb); }
+      if (f.optional) { var op = document.createElement('span'); op.className = 'pf-sub'; op.textContent = '（任意）'; lab.appendChild(op); }
+      else { var rq = document.createElement('span'); rq.className = 'req'; rq.textContent = '必須'; lab.appendChild(rq); }
+      q.appendChild(lab);
+      if (f.options) {
+        var box = document.createElement('div'); box.className = 'pf-opts';
+        f.options.forEach(function (o) {
+          var l = document.createElement('label'); l.className = 'opt';
+          var inp = document.createElement('input'); inp.type = 'radio'; inp.name = 'pf_' + f.key; inp.value = o;
+          inp.addEventListener('change', pfSave);
+          var sp = document.createElement('span'); sp.textContent = o;
+          l.appendChild(inp); l.appendChild(sp); box.appendChild(l);
+        });
+        q.appendChild(box);
+      } else {
+        var el = document.createElement(f.area ? 'textarea' : 'input');
+        if (!f.area) el.type = 'text';
+        el.id = 'pf-' + f.key; if (f.max) el.maxLength = f.max;
+        if (f.placeholder) el.placeholder = f.placeholder;
+        el.addEventListener('input', pfSave);
+        q.appendChild(el);
+      }
+      if (f.note) { var nt = document.createElement('p'); nt.className = 'hint'; nt.textContent = f.note; q.appendChild(nt); }
+      root.appendChild(q);
+    });
+  }
+  function pfCollect() {
+    var p = {};
+    pfFields.forEach(function (f) {
+      if (f.options) { var c = document.querySelector('input[name="pf_' + f.key + '"]:checked'); p[f.key] = c ? c.value : ''; }
+      else p[f.key] = $('pf-' + f.key).value;
+    });
+    return p;
+  }
+  function pfSave() { store(PF_KEY, pfCollect()); }
+  function pfRestore() {
+    var d = load(PF_KEY); if (!d) return;
+    pfFields.forEach(function (f) {
+      if (f.options) Array.prototype.forEach.call(document.querySelectorAll('input[name="pf_' + f.key + '"]'), function (x) { x.checked = x.value === d[f.key]; });
+      else if (d[f.key]) $('pf-' + f.key).value = d[f.key];
+    });
+  }
+  function pfCheck(p) {
+    var bad = [];
+    pfFields.forEach(function (f) {
+      if (f.optional) return;
+      var ng = !String(p[f.key] || '').trim();
+      $('pfq-' + f.key).classList.toggle('err', ng);
+      if (ng) bad.push('pfq-' + f.key);
+    });
+    return bad;
+  }
+  ['input', 'change'].forEach(function (ev) {
+    $('screen-profile').addEventListener(ev, function (e) {
+      var q = e.target.closest && e.target.closest('.pf-q');
+      if (q) q.classList.remove('err');
+      if (!document.querySelector('.pf-q.err')) $('pfMsg').textContent = '';
+    });
+  });
+  function openProfile(fields) {
+    $('pfName').textContent = state.name;
+    pfBuild(fields);
+    pfRestore();
+    show('profile');
+  }
+  $('pfSubmit').addEventListener('click', function () {
+    var p = pfCollect();
+    var bad = pfCheck(p);
+    if (bad.length) {
+      $('pfMsg').textContent = '未回答の項目があります。赤枠の項目にご回答ください。';
+      var first = $(bad[0]); if (first && first.scrollIntoView) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+    $('pfSubmit').disabled = true; $('pfMsg').textContent = ''; $('pfSubmit').textContent = '送信しています…';
+    api('profile', { token: TOKEN, profile: p }).then(function () {
+      store(PF_KEY, null);
+      show('intro');
+    }).catch(function (e) {
+      $('pfMsg').textContent = (e && e.message) || '送信できませんでした。通信状況を確認して、もう一度お試しください。';
+    }).then(function () {
+      $('pfSubmit').disabled = false; $('pfSubmit').textContent = '回答を送信して次へ';
+    });
+  });
+
+  /* ---------- 起動時 ---------- */
+  function fmtExpiry(ms) {
+    var d = new Date(ms);
+    var p = function (n) { return (n < 10 ? '0' : '') + n; };
+    return d.getFullYear() + '/' + p(d.getMonth() + 1) + '/' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+  }
+  if (!/^[0-9a-f]{40,64}$/.test(TOKEN)) {
+    blocked('この受験URLは使用できません', '採用担当者からご案内した受験URLを、そのまま開いてください。');
+  } else {
+    $('loadingText').textContent = '受験URLを確認しています…';
+    api('check', { token: TOKEN }).then(function (c) {
+      if (c.status === 'ok') {
+        state.name = c.name;
+        $('inviteName').textContent = c.name;
+        $('expiryText').textContent = '（このURLの有効期限：' + fmtExpiry(c.expiresAt) + '）';
+        if (c.profileDone) show('intro'); else openProfile(c.profileForm);
+      } else if (c.status === 'active') {
+        state.name = c.name;
+        var left = Math.max(0, Math.ceil((c.startedAt + c.limitSec * 1000 - c.serverNow) / 1000));
+        $('resumeLeft').textContent = fmt(left);
+        $('resumeBtn').textContent = '受験を再開する';
+        show('resume');
+      } else if (c.status === 'used') {
+        blocked('この受験URLはすでに使用されています', '受験は終了しています。このページは閉じてかまいません。');
+      } else if (c.status === 'expired') {
+        blocked('この受験URLは有効期限が切れています', 'お手数ですが、採用担当者にご連絡ください。');
+      } else if (c.status === 'revoked') {
+        blocked('この受験URLは無効になっています', '新しい受験URLが発行されています。採用担当者からのご案内をご確認ください。');
+      } else {
+        blocked('この受験URLは使用できません', '採用担当者からご案内した受験URLを、そのまま開いてください。');
+      }
+    }).catch(function () {
+      blocked('受験URLを確認できませんでした', '通信状況を確認して、ページを再読み込みしてください。');
+    });
+  }
+})();
+</script>
+</body>
+</html>
